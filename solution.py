@@ -1,6 +1,6 @@
-import search
+# import search
 
-class FleetProblem(search.Problem):
+class FleetProblem():
     def load(self, fh):
         """Loads a problem from the opened file object fh."""
         pass
