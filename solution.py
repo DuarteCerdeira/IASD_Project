@@ -14,41 +14,50 @@ class FleetProblem():
     def load(self, fh):
         """Loads a problem from the opened file object fh."""
         lines = fh.readlines()
+
         for line in lines:
-            if line.startswith('#'):
+
+            parts = line.split()
+            if not parts:
                 continue
-            # Line that starts with 'P' contains the number of points
-            if line.startswith('P'):
-                self.n_points = int(line.split()[1])
 
-                # The following n_points - 1 lines contain the costs between each pair of points
-                self.costs = np.zeros((self.n_points, self.n_points))
-                for i in range(self.n_points - 1):
-                    self.costs[i, i+1:] = np.array([int(x) for x in lines[lines.index(line) + i + 1].split()])
-                    self.costs[i+1:, i] = self.costs[i, i+1:]
+            key = parts[0]
+
+            if key == '#':
+                continue
                 
-            # Line that starts with 'R' contains the number of requests
-            elif line.startswith('R'):
-                self.n_requests = int(line.split()[1])
+            if key == 'P':
+                self.n_points = int(parts[1])
+                self.costs = np.zeros((self.n_points, self.n_points))
 
-                # The following n_requests lines contain the requests
+                for i in range(self.n_points - 1):
+                    cost_line = lines[lines.index(line) + i + 1]
+                    cost_values = [int(x) for x in cost_line.split()]
+                    
+                    for j in range(i + 1, self.n_points):
+                        self.costs[i, j] = self.costs[j, i] = cost_values[j - i - 1]
+
+            elif key == 'R':
+                self.n_requests = int(parts[1])
+                self.requests = []
+
                 for i in range(self.n_requests):
-                    t, o, d, n = [int(x) for x in lines[lines.index(line) + i + 1].split()]
-                    self.requests.append({'Time': t, 'Origin': o, 'Destination': d, 'Number of Passangers': n})
+                    aux_parts= lines[lines.index(line) + i + 1].split()
+                    t, o, d, n = map(int, aux_parts)
+                    self.requests.append({'Time': t, 'Origin': o, 'Destination': d, 'Number of Passengers': n})
 
-            # Line that starts with 'V' contains the number of vehicles
-            elif line.startswith('V'):
-                self.n_vehicles = int(line.split()[1])
-
-                # The following n_vehicles lines contain the vehicles capacity
-                self.vehicles = []
+            elif key == 'V':
+                self.n_vehicles = int(parts[1])
                 for i in range(self.n_vehicles):
-                    self.vehicles.append(int(lines[lines.index(line) + i + 1]))
+                    aux_parts= lines[lines.index(line) + i + 1].split()
+                    self.vehicles = aux_parts
+                    
+
 
     def cost(self, sol):
         """Compute cost of solution sol."""
         for s in sol:
-            a, v, r, t = s  # action, vehicle, request, time
+            a, _, r, t = s  # action, vehicle, request, time
             if a == 'Dropoff':
                 T_od = self.costs[self.requests[r]['Origin']][self.requests[r]['Destination']]
                 self.requests[r]['Delay'] = t - self.requests[r]['Time'] - T_od
