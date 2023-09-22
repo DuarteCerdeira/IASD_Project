@@ -4,8 +4,8 @@ import numpy as np
 
 class FleetProblem():
     def __init__(self) -> None:
-        self.requests = []
         self.costs = np.array([])
+        self.requests = []
         self.vehicles = []
         self.n_vehicles = 0
         self.n_points = 0
@@ -32,24 +32,25 @@ class FleetProblem():
 
                 for i in range(self.n_points - 1):
                     cost_line = lines[lines.index(line) + i + 1]
-                    cost_values = [int(x) for x in cost_line.split()]
+                    cost_values = [float(x) for x in cost_line.split()]
                     
                     for j in range(i + 1, self.n_points):
                         self.costs[i, j] = self.costs[j, i] = cost_values[j - i - 1]
 
             elif key == 'R':
                 self.n_requests = int(parts[1])
-                self.requests = []
 
                 for i in range(self.n_requests):
-                    aux_parts= lines[lines.index(line) + i + 1].split()
-                    t, o, d, n = map(int, aux_parts)
+                    aux_parts = lines[lines.index(line) + i + 1].split()
+                    t = float(aux_parts[0])
+                    o, d, n = map(int, aux_parts[1:])  # time, origin, destination, number of passengers
                     self.requests.append({'Time': t, 'Origin': o, 'Destination': d, 'Number of Passengers': n})
 
             elif key == 'V':
                 self.n_vehicles = int(parts[1])
+
                 for i in range(self.n_vehicles):
-                    aux_parts= lines[lines.index(line) + i + 1].split()
+                    aux_parts = lines[lines.index(line) + i + 1].split()
                     self.vehicles = aux_parts
                     
 
