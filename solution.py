@@ -7,7 +7,11 @@ class FleetProblem(search.Problem):
     def __init__(self, initial, goal=None):
         super().__init__(initial, goal)
         self.requests = []
+        self.costs = np.array([])
         self.vehicles = []
+        self.n_vehicles = 0
+        self.n_points = 0
+        self.n_requests = 0
 
     def load(self, fh):
         """Loads a problem from the opened file object fh."""
@@ -47,7 +51,6 @@ class FleetProblem(search.Problem):
 
     def cost(self, sol):
         """Compute cost of solution sol."""
-        total_cost = 0
         for s in sol:
             a, _, r, t = s  # action, vehicle, request, time
             if a == 'Dropoff':
