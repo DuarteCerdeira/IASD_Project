@@ -1,9 +1,11 @@
 import numpy as np
+import search
 
 # import search
 
-class FleetProblem():
-    def __init__(self) -> None:
+class FleetProblem(search.Problem):
+    def __init__(self, initial, goal=None):
+        super().__init__(initial, goal)
         self.requests = []
         self.costs = np.array([])
         self.vehicles = []
@@ -15,44 +17,37 @@ class FleetProblem():
         """Loads a problem from the opened file object fh."""
         lines = fh.readlines()
 
-        for line in lines:
+        while lines != []:
+            line = lines.pop(0)
 
-            parts = line.split()
-            if not parts:
+            if line.startswith('#'):
                 continue
 
-            key = parts[0]
+            elif line.startswith('P'):
+                n_points = int(line.split()[1])
+                self.costs = np.zeros((n_points, n_points))
+                for i in range(n_points - 1):
+                    cost_line = lines.pop(0)
+                    self.costs[i, i + 1:] = np.array(cost_line.split(), float)
+                    self.costs[i + 1:, i] = self.costs[i, i + 1:]
 
-            if key == '#':
-                continue
-                
-            if key == 'P':
-                self.n_points = int(parts[1])
-                self.costs = np.zeros((self.n_points, self.n_points))
-
-                for i in range(self.n_points - 1):
-                    cost_line = lines[lines.index(line) + i + 1]
-                    cost_values = [int(x) for x in cost_line.split()]
+            elif line.startswith('R'):
+                n_requests = int(line.split()[1])
+                for _ in range(n_requests):
+                    aux_parts = lines.pop(0).split()
+                    t = float(aux_parts[0])
+                    o, d, n = map(int, aux_parts[1:])
+                    self.requests.append({
+                        'Time': t, 
+                        'Origin': o, 
+                        'Destination': d, 
+                        'Number of Passengers': n
+                        })
                     
-                    for j in range(i + 1, self.n_points):
-                        self.costs[i, j] = self.costs[j, i] = cost_values[j - i - 1]
-
-            elif key == 'R':
-                self.n_requests = int(parts[1])
-                self.requests = []
-
-                for i in range(self.n_requests):
-                    aux_parts= lines[lines.index(line) + i + 1].split()
-                    t, o, d, n = map(int, aux_parts)
-                    self.requests.append({'Time': t, 'Origin': o, 'Destination': d, 'Number of Passengers': n})
-
-            elif key == 'V':
-                self.n_vehicles = int(parts[1])
-                for i in range(self.n_vehicles):
-                    aux_parts= lines[lines.index(line) + i + 1].split()
-                    self.vehicles = aux_parts
-                    
-
+            elif line.startswith('V'):
+                n_vehicles = int(line.split()[1])
+                for _ in range(n_vehicles):
+                    self.vehicles.append(int(lines.pop(0)))
 
     def cost(self, sol):
         """Compute cost of solution sol."""
@@ -64,3 +59,21 @@ class FleetProblem():
 
         return sum([r['Delay'] for r in self.requests if 'Delay' in r])
         
+    def result(self, state, action):
+        """Return the state that results from executing
+        the given action in the given state."""
+        pass
+
+    def actions(self, state):
+        """Return the actions that can be executed in
+        the given state."""
+        pass
+
+    def goal_test(self, state):
+        """Return True if the state is a goal."""
+        pass
+
+    def solve(self):
+        """Calls the uninformed search algorithm
+        chosen. Returns a solution using the specified format."""
+        pass
