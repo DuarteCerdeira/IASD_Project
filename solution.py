@@ -1,4 +1,5 @@
 import numpy as np
+import os
 from copy import deepcopy
 
 from state import State, Request, Vehicle, Action
@@ -82,10 +83,12 @@ class FleetProblem(search.Problem):
         raise NotImplementedError
 
 if __name__=="__main__":
-    import io
     prob = FleetProblem(None)
-    with
-    with io.StringIO(P) as fh:
+    filename = "ex1.dat"
+
+    file_path = os.path.join('tests', filename)
+    with open(file_path) as fh:
         prob.load(fh)
     for a in prob.actions(prob.state):
         print(a)
+        
