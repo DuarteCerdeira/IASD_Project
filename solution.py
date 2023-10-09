@@ -50,12 +50,27 @@ class FleetProblem(search.Problem):
                 self.state.open_requests[r]['Delay'] = t - self.state.open_requests[r]['Time'] - T_od
 
         return sum([r['Delay'] for r in self.state.open_requests if 'Delay' in r])
-        
+
     def result(self, state, action):
         """Return the state that results from executing
         the given action in the given state."""
         new_state = deepcopy(state)
-        raise NotImplementedError
+        v = new_state.vehicles[action.v_id]
+        v.current_time = action.time
+        
+        if action.type == 'Pickup':
+            req = new_state.open_requests[action.req_id]
+            v.req.append(req)
+            v.occupation += req.passengers
+            if (v.pos == req.origin):   #if vehicle is in the origin point (i dont know if this is necessary)  # noqa: E501
+                v.pos = req.destination
+            new_state.open_requests.pop(action.req_id)
+        
+        elif action.type == 'Dropoff':
+            req = v.req[action.req_id]
+            v.pos = v.req[action.req_id].destination
+        
+        state = new_state
 
     def actions(self, state):
         """Return the actions that can be executed in
@@ -64,19 +79,23 @@ class FleetProblem(search.Problem):
         for v in state.vehicles:
             for r in state.open_requests:
                 if(v.occupation + r.passengers <= v.max_capacity):
-                    time=max(r.time, v.current_time + state.costs[v.position][r.origin])
+                    time=max(r.time, v.current_time + state.costs[v.pos][r.origin])
                     action_list.append(Action('Pickup', v.id, r.id, time))
             
-            for r in v.requests:
-                time=v.current_time + state.costs[v.position][r.destination]
+            for r in v.req:
+                time=v.current_time + state.costs[v.pos][r.destination]
                 action_list.append(Action('Dropoff', v.id, r.id, time))
         
         return action_list
 
     def goal_test(self, state):
         """Return True if the state is a goal."""
-        raise NotImplementedError
-
+        #check if all request lists are empty       
+        if all(not v.req for v in state.vehicles) and not state.open_requests:
+            return True
+        else:
+            return False
+    
     def solve(self):
         """Calls the uninformed search algorithm
         chosen. Returns a solution using the specified format."""
@@ -91,4 +110,5 @@ if __name__=="__main__":
         prob.load(fh)
     for a in prob.actions(prob.state):
         print(a)
+    print(prob.goal_test(prob.state))
         

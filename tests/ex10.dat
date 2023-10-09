@@ -1,0 +1,9 @@
+# number of points and distances
+P 3
+20 30
+   40
+# requests
+R 0
+# vehicles and # of seats
+V 1
+4

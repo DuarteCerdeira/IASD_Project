@@ -17,8 +17,8 @@ class State:
         self.open_requests.append(request)
         
 class Action:
-    def __init__(self, action_type, v_id, req_id, time):
-        self.action_type = action_type    #Type of action
+    def __init__(self, type, v_id, req_id, time):
+        self.type = type    #Type of action
         self.v_id = v_id  #ID of the vehicle
         self.req_id = req_id  #ID of the request
         self.time = time    #Time of the action
@@ -36,9 +36,9 @@ class Request:
 
 class Vehicle:
     def __init__(self, max_capacity, id):
-        self.position = 0   #Position of the vehicle
+        self.pos = 0   #Position of the vehicle
         self.occupation = 0 #Number of passengers in the vehicle
         self.current_time = 0   #Current time of the vehicle
-        self.requests = []  #List of requests
+        self.req = []  #List of requests
         self.max_capacity = max_capacity    #Max capacity of the vehicle
         self.id = id    #ID of the vehicle
