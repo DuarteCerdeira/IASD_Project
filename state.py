@@ -1,5 +1,13 @@
 import numpy as np
 
+def get_from_id(id, aux_l):
+    return list(filter(lambda x: x.id == id, aux_l))[0]
+
+def pop_from_id(id, aux_l):
+    for i, x in enumerate(aux_l):
+        if x.id == id:
+            return aux_l.pop(i)
+
 class State:
     def __init__(self):
         self.open_requests = []  #List of requests
@@ -15,6 +23,13 @@ class State:
         """Adds a request to the list of requests"""
         request = Request(time, origin, destination, passengers, id)
         self.open_requests.append(request)
+    
+    def get_vehicle(self, v_id):
+        """Returns the vehicle with the given id"""
+        for v in self.vehicles:
+            if v.id == v_id:
+                return v
+        return None
         
 class Action:
     def __init__(self, type, v_id, req_id, time):
@@ -42,3 +57,4 @@ class Vehicle:
         self.req = []  #List of requests
         self.max_capacity = max_capacity    #Max capacity of the vehicle
         self.id = id    #ID of the vehicle
+    

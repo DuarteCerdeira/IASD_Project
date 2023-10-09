@@ -2,8 +2,8 @@ import numpy as np
 import os
 from copy import deepcopy
 
-from state import State, Request, Vehicle, Action
 import search
+from state import State, Action, get_from_id, pop_from_id
 
 class FleetProblem(search.Problem):
     def __init__(self, initial, goal=None):
@@ -51,26 +51,30 @@ class FleetProblem(search.Problem):
 
         return sum([r['Delay'] for r in self.state.open_requests if 'Delay' in r])
 
-    def result(self, state, action):
+    def result(self, old_state, action):
         """Return the state that results from executing
         the given action in the given state."""
-        new_state = deepcopy(state)
-        v = new_state.vehicles[action.v_id]
+        state=deepcopy(old_state)
+        v = get_from_id(action.v_id, state.vehicles)
         v.current_time = action.time
         
         if action.type == 'Pickup':
-            req = new_state.open_requests[action.req_id]
-            v.req.append(req)
+            req = get_from_id(action.req_id, state.open_requests)
+            v.pos = req.destination
             v.occupation += req.passengers
-            if (v.pos == req.origin):   #if vehicle is in the origin point (i dont know if this is necessary)  # noqa: E501
-                v.pos = req.destination
-            new_state.open_requests.pop(action.req_id)
-        
+            v.req.append(pop_from_id(req.id, state.open_requests))
+            
         elif action.type == 'Dropoff':
-            req = v.req[action.req_id]
-            v.pos = v.req[action.req_id].destination
+            req = get_from_id(action.req_id, v.req)
+            if v.pos == req.origin:   #if vehicle is in the origin point (i dont know if this is necessary)  # noqa: E501
+                v.pos = req.destination
+            else:
+                raise Exception("Vehicle is not in the origin point of the action")
+            v.occupation -= req.passengers
+            pop_from_id(req.id, v.req)
         
-        state = new_state
+        return state
+    
 
     def actions(self, state):
         """Return the actions that can be executed in
@@ -109,6 +113,5 @@ if __name__=="__main__":
     with open(file_path) as fh:
         prob.load(fh)
     for a in prob.actions(prob.state):
-        print(a)
-    print(prob.goal_test(prob.state))
+        prob.result(prob.state, a)
         
