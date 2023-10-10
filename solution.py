@@ -75,7 +75,6 @@ class FleetProblem(search.Problem):
         
         return state
     
-
     def actions(self, state):
         """Return the actions that can be executed in
         the given state."""
@@ -103,15 +102,17 @@ class FleetProblem(search.Problem):
     def solve(self):
         """Calls the uninformed search algorithm
         chosen. Returns a solution using the specified format."""
-        raise NotImplementedError
+        
 
 if __name__=="__main__":
     prob = FleetProblem(None)
-    filename = "ex1.dat"
+    filename = "ex10.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
         prob.load(fh)
-    for a in prob.actions(prob.state):
-        prob.result(prob.state, a)
+    
+    a = Action('Pickup', 0, 0, 30)    
+    prob.result(prob.state, a)
+    print(prob.state)
         

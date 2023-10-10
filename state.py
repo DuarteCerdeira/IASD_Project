@@ -30,6 +30,9 @@ class State:
             if v.id == v_id:
                 return v
         return None
+    
+    def __str__(self) -> str:
+        return f'Vehicles: {str(self.vehicles)}\nRequests: {str(self.open_requests)}'
         
 class Action:
     def __init__(self, type, v_id, req_id, time):
@@ -48,6 +51,9 @@ class Request:
         self.destination = destination  #Destination of the request
         self.passengers = passengers    #Number of passengers
         self.id = id    #ID of the request
+        
+    def __str__(self) -> str:
+        return f'ID {str(self.id)}: {str(self.time)}, {str(self.origin)}, {str(self.destination)}, {str(self.passengers)}\n'
 
 class Vehicle:
     def __init__(self, max_capacity, id):
@@ -57,4 +63,7 @@ class Vehicle:
         self.req = []  #List of requests
         self.max_capacity = max_capacity    #Max capacity of the vehicle
         self.id = id    #ID of the vehicle
+        
+    def __str__(self) -> str:
+        return f'Vehicle {str(self.id)}: req->{str(self.req)}, pos:{str(self.pos)}, occupation:{str(self.occupation)}'
     
