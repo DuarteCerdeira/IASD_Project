@@ -11,7 +11,6 @@ def pop_from_id(id, aux_l):
 class State:
     def __init__(self):
         self.open_requests = []  #List of requests
-        self.costs = np.array([])   #Matrix of costs
         self.vehicles = []  #List of vehicles
         
     def add_vehicle(self, max_capacity, id):
@@ -26,16 +25,9 @@ class State:
     
     def __str__(self) -> str:
         return f'Vehicles: {str(self.vehicles)}\nRequests: {str(self.open_requests)}'
-        
-class Action:
-    def __init__(self, type, v_id, req_id, time):
-        self.type = type    #Type of action
-        self.v_id = v_id  #ID of the vehicle
-        self.req_id = req_id  #ID of the request
-        self.time = time    #Time of the action
-        
-    def __str__(self):
-        return f'{self.action_type}, {str(self.v_id)}, {str(self.req_id)}, {str(self.time)}'
+
+    def __lt__(self, other):
+        return True
         
 class Request:
     def __init__(self, time, origin, destination, passengers, id):
