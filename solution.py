@@ -2,6 +2,9 @@ import numpy as np
 import os
 from copy import deepcopy
 
+import cProfile
+import pstats
+
 import search
 
 def get_from_id(id, aux_l):
@@ -104,10 +107,15 @@ class FleetProblem(search.Problem):
 
         if type == 'Pickup':
             request = get_from_id(req, state1.open_requests)
-            c += time - (request.time + self.costs[request.origin][request.destination]) + self.costs[v_in_2.pos][request.destination]
+            c += time + self.costs[v_in_2.pos][request.destination] - (request.time + self.costs[request.origin][request.destination])
+            # c += time - request.time
 
         c += self.costs[v_in_1.pos][v_in_2.pos] * len(v_in_1.req)
-        for r in v_in_1.req:
+
+        if type == 'Dropoff':
+            c -= self.costs[v_in_1.pos][v_in_2.pos]
+
+        for r in v_in_2.req:
             c += self.costs[v_in_2.pos][r.destination] - self.costs[v_in_1.pos][r.destination]
 
         return c
@@ -179,12 +187,15 @@ class FleetProblem(search.Problem):
 
 if __name__=="__main__":
     prob = FleetProblem(None)
-    filename = "ex2.dat"
+    filename = "ex3.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
         prob.load(fh)
 
+    # cProfile.run('prob.solve()', 'output.prof')
+    # p = pstats.Stats('output.prof')
+    # p.sort_stats('cumulative').print_stats(20)
     sol = prob.solve()
     print(sol)
     print(prob.cost(sol))
