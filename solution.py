@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from copy import deepcopy
+import random
 
 import cProfile
 import pstats
@@ -43,6 +44,7 @@ class Request:
         self.destination = destination  #Destination of the request
         self.passengers = passengers    #Number of passengers
         self.id = id    #ID of the request
+        self.pickup_time = 0   #Time of pickup
         
     def __str__(self) -> str:
         return f'ID {str(self.id)}: {str(self.time)}, {str(self.origin)}, {str(self.destination)}, {str(self.passengers)}\n'
@@ -104,21 +106,24 @@ class FleetProblem(search.Problem):
         type, vehicle, req, time = action  # action, vehicle, request, time
         v_in_1 = get_from_id(vehicle, state1.vehicles)
         v_in_2 = get_from_id(vehicle, state2.vehicles)
-        travel_time = time - v_in_1.current_time
-
-
+        delay = 0
+        
+        if type == 'Dropoff':
+            #add to delay for every request exept the one that is being dropped off
+            request = get_from_id(req, v_in_1.req)
+            #delay += self.costs[v_in_1.pos][v_in_2.pos] * len(v_in_2.req)
+            delay += time - (request.pickup_time + self.costs[request.origin][request.destination])     #add diference of dropoff and pickup time
+        
         if type == 'Pickup':
             request = get_from_id(req, state1.open_requests)
-            c += time + self.costs[v_in_2.pos][request.destination] - (request.time + self.costs[request.origin][request.destination])
-
-        for r in v_in_2.req:
-            update = self.costs[v_in_2.pos][r.destination] - self.costs[v_in_1.pos][r.destination]
-            c += update #+ path
-
-        if type == 'Dropoff':
-            c -= self.costs[v_in_1.pos][v_in_2.pos]
-
-        return c
+            delay += time - request.time    #add diference of pickup and current time
+            #delay += self.costs[v_in_1.pos][v_in_2.pos] * len(v_in_1.req)   #add to delay for every request exept the one that is being picked up
+        
+        random.seed()
+        
+        delay += random.randint(1,100)
+        
+        return c + delay
         
 
     def cost(self, sol):
@@ -132,11 +137,11 @@ class FleetProblem(search.Problem):
 
         return sum(delays)
 
-    def result(self, old_state, type):
+    def result(self, old_state, action):
         """Return the state that results from executing
         the given action in the given state."""
         state=deepcopy(old_state)
-        type, vehicle, req, time = type  # action, vehicle, request, time
+        type, vehicle, req, time = action  # action, vehicle, request, time
         vehicle = get_from_id(vehicle, state.vehicles)
         vehicle.current_time = time
         
@@ -145,6 +150,7 @@ class FleetProblem(search.Problem):
             vehicle.pos = req.origin
             vehicle.occupation += req.passengers
             vehicle.req.append(pop_from_id(req.id, state.open_requests))
+            req.pickup_time = time
             
         elif type == 'Dropoff':
             req = get_from_id(req, vehicle.req)
