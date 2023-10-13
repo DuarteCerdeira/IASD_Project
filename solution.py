@@ -104,19 +104,19 @@ class FleetProblem(search.Problem):
         type, vehicle, req, time = action  # action, vehicle, request, time
         v_in_1 = get_from_id(vehicle, state1.vehicles)
         v_in_2 = get_from_id(vehicle, state2.vehicles)
+        travel_time = time - v_in_1.current_time
+
 
         if type == 'Pickup':
             request = get_from_id(req, state1.open_requests)
             c += time + self.costs[v_in_2.pos][request.destination] - (request.time + self.costs[request.origin][request.destination])
-            # c += time - request.time
 
-        c += self.costs[v_in_1.pos][v_in_2.pos] * len(v_in_1.req)
+        for r in v_in_2.req:
+            update = self.costs[v_in_2.pos][r.destination] - self.costs[v_in_1.pos][r.destination]
+            c += update #+ path
 
         if type == 'Dropoff':
             c -= self.costs[v_in_1.pos][v_in_2.pos]
-
-        for r in v_in_2.req:
-            c += self.costs[v_in_2.pos][r.destination] - self.costs[v_in_1.pos][r.destination]
 
         return c
         
@@ -187,15 +187,15 @@ class FleetProblem(search.Problem):
 
 if __name__=="__main__":
     prob = FleetProblem(None)
-    filename = "ex3.dat"
+    filename = "ex9.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
         prob.load(fh)
 
-    # cProfile.run('prob.solve()', 'output.prof')
-    # p = pstats.Stats('output.prof')
-    # p.sort_stats('cumulative').print_stats(20)
-    sol = prob.solve()
+    sol = 0
+    cProfile.run('sol = prob.solve()', 'output.prof')
+    p = pstats.Stats('output.prof')
+    p.sort_stats('cumulative').print_stats(20)
     print(sol)
     print(prob.cost(sol))
