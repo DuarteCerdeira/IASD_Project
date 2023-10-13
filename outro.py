@@ -216,11 +216,6 @@ class FleetProblem(search.Problem):
         newR = tuple(newR)
         newState = (newV, newR, newT)
 
-
-
-
-
-
         return newState
     
     def actions(self, state):

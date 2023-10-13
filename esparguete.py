@@ -46,6 +46,9 @@ class Request:
         
     def __str__(self) -> str:
         return f'ID {str(self.id)}: {str(self.time)}, {str(self.origin)}, {str(self.destination)}, {str(self.passengers)}\n'
+    
+    def __lt__(self, other):
+        return True
 
 class Vehicle:
     def __init__(self, max_capacity, id):
@@ -58,11 +61,14 @@ class Vehicle:
         
     def __str__(self) -> str:
         return f'Vehicle {str(self.id)}: req->{str(self.req)}, pos:{str(self.pos)}, occupation:{str(self.occupation)}'
+    
+    def __lt__(self, other):
+        return True	
 
 class FleetProblem(search.Problem):
     def __init__(self, initial=None, goal=None):
         super().__init__(initial, goal)
-        self.initial = initial if initial is not None else (set(), set())
+        self.initial = initial if initial is not None else ([], [])
         self.costs = np.array([])
 
     def load(self, fh):
@@ -90,7 +96,7 @@ class FleetProblem(search.Problem):
                     t = float(aux_parts[0])
                     o, d, n = map(int, aux_parts[1:])
                     reqs, vehicles = self.initial
-                    reqs.add(Request(t, o, d, n, i))
+                    reqs.append(Request(t, o, d, n, i))
                     self.initial = (reqs, vehicles)
 
             elif line.startswith('V'):
@@ -98,34 +104,27 @@ class FleetProblem(search.Problem):
                 for i in range(n_vehicles):
                     max_capacity = int(lines.pop(0))
                     reqs, vehicles = self.initial
-                    vehicles.add(Vehicle(max_capacity, i))
+                    vehicles.append(Vehicle(max_capacity, i))
                     self.initial = (reqs, vehicles)
+                    
+        reqs, vehicles = self.initial
+        self.initial = (tuple(reqs), tuple(vehicles))
 
     def path_cost(self, c, state1, action, state2):
         type, vehicle, req, time = action
         reqs1, vehicles1 = state1
-        reqs2, vehicles2 = state2
 
         if type == 'Pickup':
             request = get_from_id(req, reqs1)
-            c += time + self.costs[get_from_id(vehicle, vehicles2).pos][request.destination] - (
-                request.time + self.costs[request.origin][request.destination])
-
-        c += self.costs[get_from_id(vehicle, vehicles1).pos][get_from_id(vehicle, vehicles2).pos] * len(
-            get_from_id(vehicle, vehicles1).req)
-
+            c += time - request.time
+    
         if type == 'Dropoff':
-            c -= self.costs[get_from_id(vehicle, vehicles1).pos][get_from_id(vehicle, vehicles2).pos]
-
-        for r in get_from_id(vehicle, vehicles2).req:
-            c += self.costs[get_from_id(vehicle, vehicles2).pos][r.destination] - self.costs[
-                get_from_id(vehicle, vehicles1).pos][r.destination]
+            request = get_from_id(req, get_from_id(vehicle, vehicles1).req)
+            for v in vehicles1:
+                c += time - request.time - self.costs[request.origin][request.destination]
             
-            
-
         return c
         
-
     def cost(self, sol):
         """Compute cost of solution sol."""
         reqs, _ = self.initial
@@ -141,9 +140,11 @@ class FleetProblem(search.Problem):
     def result(self, old_state, action):
         """Return the state that results from executing
         the given action in the given state."""
-        state = old_state
+        state = deepcopy(old_state)
         type, vehicle, req, time = action
         reqs, vehicles = state
+        vehicles = list(vehicles)
+        reqs = list(reqs)
 
         vehicle = get_from_id(vehicle, vehicles)
         vehicle.current_time = time
@@ -152,7 +153,7 @@ class FleetProblem(search.Problem):
             request = get_from_id(req, reqs)
             vehicle.pos = request.origin
             vehicle.occupation += request.passengers
-            vehicle.req.add(request)
+            vehicle.req.append(request)
             reqs.remove(request)
 
         elif type == 'Dropoff':
@@ -161,6 +162,7 @@ class FleetProblem(search.Problem):
             vehicle.occupation -= request.passengers
             vehicle.req.remove(request)
 
+        state = (tuple(reqs), tuple(vehicles))
         return state
     
     def actions(self, state):
@@ -179,7 +181,7 @@ class FleetProblem(search.Problem):
                 time = v.current_time + self.costs[v.pos][r.destination]
                 action_list.add(('Dropoff', v.id, r.id, time))
 
-        return action_list
+        return list(action_list)
 
     def goal_test(self, state):
         """Return True if the state is a goal."""
@@ -193,9 +195,9 @@ class FleetProblem(search.Problem):
         return node.solution()
         
 
-if __name__=="__main__":
+if __name__ == "__main__":
     prob = FleetProblem(None)
-    filename = "ex1.dat"
+    filename = "ex2.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
