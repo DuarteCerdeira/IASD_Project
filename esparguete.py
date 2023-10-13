@@ -62,14 +62,14 @@ class Vehicle:
 class FleetProblem(search.Problem):
     def __init__(self, initial=None, goal=None):
         super().__init__(initial, goal)
-        self.initial = State() if initial is None else initial
+        self.initial = initial if initial is not None else (set(), set())
         self.costs = np.array([])
 
     def load(self, fh):
         """Loads a problem from the opened file object fh."""
         lines = fh.readlines()
 
-        while lines != []:
+        while lines:
             line = lines.pop(0)
 
             if line.startswith('#'):
@@ -89,77 +89,88 @@ class FleetProblem(search.Problem):
                     aux_parts = lines.pop(0).split()
                     t = float(aux_parts[0])
                     o, d, n = map(int, aux_parts[1:])
-                    self.initial.add_request(t, o, d, n, i)
+                    reqs, vehicles = self.initial
+                    reqs.add(Request(t, o, d, n, i))
+                    self.initial = (reqs, vehicles)
 
             elif line.startswith('V'):
                 n_vehicles = int(line.split()[1])
                 for i in range(n_vehicles):
-                    self.initial.add_vehicle(int(lines.pop(0)), i)
+                    max_capacity = int(lines.pop(0))
+                    reqs, vehicles = self.initial
+                    vehicles.add(Vehicle(max_capacity, i))
+                    self.initial = (reqs, vehicles)
 
     def path_cost(self, c, state1, action, state2):
-        """Return the cost of a solution path that arrives at
-        state2 from state1 via action, assuming cost c to get
-        up to state1. If the problem is such that the path doesn't
-        matter, this function will only look at state2."""
-        type, vehicle, req, time = action  # action, vehicle, request, time
-        v_in_1 = get_from_id(vehicle, state1.vehicles)
-        v_in_2 = get_from_id(vehicle, state2.vehicles)
+        type, vehicle, req, time = action
+        reqs1, vehicles1 = state1
+        reqs2, vehicles2 = state2
 
         if type == 'Pickup':
-            request = get_from_id(req, state1.open_requests)
-            c += time + self.costs[v_in_2.pos][request.destination] - (request.time + self.costs[request.origin][request.destination])
-            # c += time - request.time
+            request = get_from_id(req, reqs1)
+            c += time + self.costs[get_from_id(vehicle, vehicles2).pos][request.destination] - (
+                request.time + self.costs[request.origin][request.destination])
 
-        c += self.costs[v_in_1.pos][v_in_2.pos] * len(v_in_1.req)
+        c += self.costs[get_from_id(vehicle, vehicles1).pos][get_from_id(vehicle, vehicles2).pos] * len(
+            get_from_id(vehicle, vehicles1).req)
 
         if type == 'Dropoff':
-            c -= self.costs[v_in_1.pos][v_in_2.pos]
+            c -= self.costs[get_from_id(vehicle, vehicles1).pos][get_from_id(vehicle, vehicles2).pos]
 
-        for r in v_in_2.req:
-            c += self.costs[v_in_2.pos][r.destination] - self.costs[v_in_1.pos][r.destination]
+        for r in get_from_id(vehicle, vehicles2).req:
+            c += self.costs[get_from_id(vehicle, vehicles2).pos][r.destination] - self.costs[
+                get_from_id(vehicle, vehicles1).pos][r.destination]
+            
+            
 
         return c
         
 
     def cost(self, sol):
         """Compute cost of solution sol."""
+        reqs, _ = self.initial
         delays = []
         for s in sol:
             a, _, r, t = s  # action, vehicle, request, time
             if a == 'Dropoff':
-                T_od = self.costs[self.initial.open_requests[r].origin][self.initial.open_requests[r].destination]
-                delays.append(t - self.initial.open_requests[r].time - T_od)
+                T_od = self.costs[list(reqs)[r].origin][list(reqs)[r].destination]
+                delays.append(t - list(reqs)[r].time - T_od)
 
         return sum(delays)
 
-    def result(self, old_state, type):
+    def result(self, old_state, action):
         """Return the state that results from executing
         the given action in the given state."""
-        state=deepcopy(old_state)
-        type, vehicle, req, time = type  # action, vehicle, request, time
-        vehicle = get_from_id(vehicle, state.vehicles)
+        state = old_state
+        type, vehicle, req, time = action
+        reqs, vehicles = state
+
+        vehicle = get_from_id(vehicle, vehicles)
         vehicle.current_time = time
-        
+
         if type == 'Pickup':
-            req = get_from_id(req, state.open_requests)
-            vehicle.pos = req.origin
-            vehicle.occupation += req.passengers
-            vehicle.req.append(pop_from_id(req.id, state.open_requests))
-            
+            request = get_from_id(req, reqs)
+            vehicle.pos = request.origin
+            vehicle.occupation += request.passengers
+            vehicle.req.add(request)
+            reqs.remove(request)
+
         elif type == 'Dropoff':
-            req = get_from_id(req, vehicle.req)
-            vehicle.pos = req.destination
-            vehicle.occupation -= req.passengers
-            pop_from_id(req.id, vehicle.req)
-        
+            request = get_from_id(req, vehicle.req)
+            vehicle.pos = request.destination
+            vehicle.occupation -= request.passengers
+            vehicle.req.remove(request)
+
         return state
     
     def actions(self, state):
         """Return the actions that can be executed in
         the given state."""
-        action_list = set()  # Use a set for faster membership checks
-        for v in state.vehicles:
-            for r in state.open_requests:
+        reqs, vehicles = state
+        action_list = set()
+
+        for v in vehicles:
+            for r in reqs:
                 if v.occupation + r.passengers <= v.max_capacity:
                     time = max(r.time, v.current_time + self.costs[v.pos][r.origin])
                     action_list.add(('Pickup', v.id, r.id, time))
@@ -172,11 +183,8 @@ class FleetProblem(search.Problem):
 
     def goal_test(self, state):
         """Return True if the state is a goal."""
-        #check if all request lists are empty       
-        if all(not v.req for v in state.vehicles) and not state.open_requests:
-            return True
-        else:
-            return False
+        reqs, vehicles = state
+        return not reqs and all(not v.req for v in vehicles)
     
     def solve(self):
         """Calls the uninformed search algorithm
@@ -187,7 +195,7 @@ class FleetProblem(search.Problem):
 
 if __name__=="__main__":
     prob = FleetProblem(None)
-    filename = "ex2.dat"
+    filename = "ex1.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
