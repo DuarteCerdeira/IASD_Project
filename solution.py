@@ -7,6 +7,29 @@ import pstats
 
 import search
 
+def from_request(request, entity):
+    if entity == 'time':
+        return request[0]
+    if entity == 'origin':
+        return request[1]
+    if entity == 'destination':
+        return request[2]
+    if entity == 'passengers':
+        return request[3]
+    if entity == 'id':
+        return request[4]
+
+def from_vehicle(vehicle, entity):
+    if entity == 'capacity':
+        return vehicle[0]
+    if entity == 'position':
+        return vehicle[1]
+    if entity == 'time':
+        return vehicle[2]
+    if entity == 'requests':
+        return vehicle[3]
+    
+
 class FleetProblem(search.Problem):
     def __init__(self):
         self.costs = np.array([])
@@ -47,7 +70,7 @@ class FleetProblem(search.Problem):
                 n_vehicles = int(line.split()[1])
                 for i in range(n_vehicles):
                     vehicles.append((int(lines.pop(0)), 0, 0, ())) # capacity, position, time, requests
-
+                    
         requests = tuple(requests)
         vehicles = tuple(vehicles)
         self.initial = (requests, vehicles)
@@ -151,17 +174,34 @@ class FleetProblem(search.Problem):
         else:
             return False
     
+    def h(self, node):# vehicle: capacity, position, time, requests || request: time, origin, destination, passengers, id
+        state = node.state
+        remaining_requests_time = sum(self.costs[r[1]][r[2]] for r in state[0])
+        T_od = 0
+        T_co = 0
+        
+        for v in state[1]:
+            for r in v[3]:
+                T_od += self.costs[r[1]][r[2]]  # T_od = sum of all T_od for all requests in all vehicles
+            for r in state[0]:
+                T_co += self.costs[v[1]][r[1]]  # T_co = sum of the times form v positions to the requests
+
+        # Combine these factors to estimate the remaining cost
+        heuristic_cost = (remaining_requests_time + T_od+ T_co) * 0.5
+        
+        return heuristic_cost
+    
     def solve(self):
         """Calls the uninformed search algorithm
         chosen. Returns a solution using the specified format."""
-        node = search.uniform_cost_search(self)
+        node = search.astar_search(self, self.h)
         print(node.path_cost)
         return node.solution()
         
 
 if __name__=="__main__":
     prob = FleetProblem()
-    filename = "ex3.dat"
+    filename = "ex2.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:

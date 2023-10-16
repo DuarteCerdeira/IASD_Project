@@ -853,7 +853,7 @@ class OnlineSearchProblem(Problem):
         return False
 
 
-class LRTAStarAgent:
+class LRAStarAgent:
     """ [Figure 4.24]
     Abstract class for LRTA*-Agent. A problem needs to be
     provided which is an instance of a subclass of Problem Class.
