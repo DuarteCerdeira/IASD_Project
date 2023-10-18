@@ -184,10 +184,10 @@ class FleetProblem(search.Problem):
             for r in v[3]:
                 T_od += self.costs[r[1]][r[2]]  # T_od = sum of all T_od for all requests in all vehicles
             for r in state[0]:
-                T_co += self.costs[v[1]][r[1]]  # T_co = sum of the times form v positions to the requests
+                T_co += self.costs[v[1]][r[1]]  # T_co = sum of the times from current v positions to the requests origins
 
         # Combine these factors to estimate the remaining cost
-        heuristic_cost = (remaining_requests_time + T_od+ T_co) * 0.5
+        heuristic_cost = (remaining_requests_time + T_od + T_co) * 0.5
         
         return heuristic_cost
     
@@ -201,7 +201,7 @@ class FleetProblem(search.Problem):
 
 if __name__=="__main__":
     prob = FleetProblem()
-    filename = "ex4.dat"
+    filename = "ex8.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
