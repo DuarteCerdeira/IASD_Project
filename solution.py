@@ -201,7 +201,7 @@ class FleetProblem(search.Problem):
 
 if __name__=="__main__":
     prob = FleetProblem()
-    filename = "ex2.dat"
+    filename = "ex4.dat"
 
     file_path = os.path.join('tests', filename)
     with open(file_path) as fh:
