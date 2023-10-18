@@ -1,10 +1,10 @@
 0 -> 10
 1 -> 69
 2 -> 139
-3 -> 149 Not optimal i think it should be 139
+!3 -> 149 Not optimal i think it should be 139
 4 -> 87
 5 -> 2.832334879439538
-6 -> 17.31275332367413 Not optimal
+!6 -> 17.31275332367413 Not optimal
 7 -> -2.220446049250313e-15 dafuq? mas da bem
-8 -> 3.5100703777491145 Not optimal
+!8 -> 3.5100703777491145 Not optimal
 9 -> Ainda está a correr
