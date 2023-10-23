@@ -1,9 +1,4 @@
 import numpy as np
-import os
-from copy import deepcopy
-
-import cProfile
-import pstats
 
 import search
 
@@ -178,16 +173,13 @@ class FleetProblem(search.Problem):
         state = node.state
         remaining_requests_time = sum(self.costs[r[1]][r[2]] for r in state[0])
         T_od = 0
-        T_co = 0
         
         for v in state[1]:
             for r in v[3]:
                 T_od += self.costs[r[1]][r[2]]  # T_od = sum of all T_od for all requests in all vehicles
-            #for r in state[0]:
-                #T_co += self.costs[v[1]][r[1]]  # T_co = sum of the times from current v positions to the requests origins
 
         # Combine these factors to estimate the remaining cost and weight to not overshadow the cost so far
-        heuristic_cost = (remaining_requests_time + T_od + T_co) #* 0.5 
+        heuristic_cost = (remaining_requests_time + T_od) * 0.8
         
         return heuristic_cost
     
@@ -197,21 +189,3 @@ class FleetProblem(search.Problem):
         node = search.astar_search(self, self.h)
         return node.solution()
         
-
-if __name__=="__main__":
-    prob = FleetProblem()
-    
-    for i in range(0,9):    
-        filename = f"ex{i}.dat"
-
-        file_path = os.path.join('tests', filename)
-        with open(file_path) as fh:
-            prob.load(fh)
-
-        sol = 0
-        cProfile.run('sol = prob.solve()', 'output.prof')
-        p = pstats.Stats('output.prof')
-        #p.sort_stats('cumulative').print_stats(20)
-        print(f"Solution for {filename}:")
-        print(sol)
-        print(prob.cost(sol))
