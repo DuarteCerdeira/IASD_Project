@@ -17,7 +17,7 @@ if __name__=="__main__":
         sol = 0
         cProfile.run('sol = prob.solve()', 'output.prof')
         p = pstats.Stats('output.prof')
-        if i == 8:
+        if i == 9:
             p.sort_stats('cumulative').print_stats(20)
         print(f"Solution for {filename}:")
         #print(sol)

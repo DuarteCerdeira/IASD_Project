@@ -1,31 +1,12 @@
 import numpy as np
 
-import search
-
-def from_request(request, entity):
-    if entity == 'time':
-        return request[0]
-    if entity == 'origin':
-        return request[1]
-    if entity == 'destination':
-        return request[2]
-    if entity == 'passengers':
-        return request[3]
-    if entity == 'id':
-        return request[4]
-
-def from_vehicle(vehicle, entity):
-    if entity == 'capacity':
-        return vehicle[0]
-    if entity == 'position':
-        return vehicle[1]
-    if entity == 'time':
-        return vehicle[2]
-    if entity == 'requests':
-        return vehicle[3]
-    
+import search   
 
 class FleetProblem(search.Problem):
+    # state: requests, vehicles
+    # vehicle: capacity, position, time, requests
+    # request: time, origin, destination, passengers, id
+    
     def __init__(self):
         self.costs = np.array([])
         self.requests = ()
@@ -163,22 +144,23 @@ class FleetProblem(search.Problem):
 
     def goal_test(self, state):
         """Return True if the state is a goal."""
-        #check if all request lists are empty       
+        # Check if all request lists are empty       
         if all(not v[3] for v in state[1]) and not state[0]:
             return True
         else:
             return False
     
-    def h(self, node):# vehicle: capacity, position, time, requests || request: time, origin, destination, passengers, id
+    def h(self, node):
         state = node.state
         remaining_requests_time = sum(self.costs[r[1]][r[2]] for r in state[0])
-        T_od = 0
+        T_od = 0    # T_od = sum of all T_od for all requests in all vehicles
         
         for v in state[1]:
             for r in v[3]:
-                T_od += self.costs[r[1]][r[2]]  # T_od = sum of all T_od for all requests in all vehicles
+                T_od += self.costs[r[1]][r[2]]  
 
-        # Combine these factors to estimate the remaining cost and weight to not overshadow the cost so far
+        # Combine these factors to estimate the remaining cost and
+        # weight to not overshadow the cost so far
         heuristic_cost = (remaining_requests_time + T_od) * 0.8
         
         return heuristic_cost
