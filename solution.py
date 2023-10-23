@@ -59,7 +59,6 @@ class FleetProblem(search.Problem):
         matter, this function will only look at state2."""
         type, v_id, r_id, time = action  # action, vehicle, request, time
         v_in_1 = state1[1][v_id]
-        v_in_2 = state2[1][v_id]
         travel_time = time - v_in_1[2]
 
         if type == 'Pickup':
@@ -74,7 +73,7 @@ class FleetProblem(search.Problem):
             for r in v_in_1[3]:
                 c += travel_time
 
-        return c
+        return c if c >= 0 else 0
         
 
     def cost(self, sol):
