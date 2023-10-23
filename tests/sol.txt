@@ -1,3 +1,4 @@
+with Tco and 0.5 weight
 0 -> 10
 1 -> 69
 2 -> 139
@@ -7,4 +8,16 @@
 !6 -> 17.31275332367413 Not optimal
 7 -> -2.220446049250313e-15 dafuq? mas da bem
 !8 -> 3.5100703777491145 Not optimal
+9 -> Ainda está a correr
+
+without Tco and weight because tco was giant so no more need for weights
+0 -> 10
+1 -> 69
+!2 -> 159
+!3 -> 224 Not optimal i think it should be 139
+4 -> 87
+5 -> 2.832334879439538
+~6 -> 16.849235675926028 Might be right
+7 -> -2.220446049250313e-15 ~= 0
+~8 ->  1.5841388494683923
 9 -> Ainda está a correr

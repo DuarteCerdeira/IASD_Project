@@ -183,11 +183,11 @@ class FleetProblem(search.Problem):
         for v in state[1]:
             for r in v[3]:
                 T_od += self.costs[r[1]][r[2]]  # T_od = sum of all T_od for all requests in all vehicles
-            for r in state[0]:
-                T_co += self.costs[v[1]][r[1]]  # T_co = sum of the times from current v positions to the requests origins
+            #for r in state[0]:
+                #T_co += self.costs[v[1]][r[1]]  # T_co = sum of the times from current v positions to the requests origins
 
-        # Combine these factors to estimate the remaining cost
-        heuristic_cost = (remaining_requests_time + T_od + T_co) * 0.5 
+        # Combine these factors to estimate the remaining cost and weight to not overshadow the cost so far
+        heuristic_cost = (remaining_requests_time + T_od + T_co) #* 0.5 
         
         return heuristic_cost
     
@@ -195,7 +195,6 @@ class FleetProblem(search.Problem):
         """Calls the uninformed search algorithm
         chosen. Returns a solution using the specified format."""
         node = search.astar_search(self, self.h)
-        print(node.path_cost)
         return node.solution()
         
 
@@ -211,7 +210,8 @@ if __name__=="__main__":
 
         sol = 0
         cProfile.run('sol = prob.solve()', 'output.prof')
-        #p = pstats.Stats('output.prof')
+        p = pstats.Stats('output.prof')
         #p.sort_stats('cumulative').print_stats(20)
-        #print(sol)
-        #print(prob.cost(sol))
+        print(f"Solution for {filename}:")
+        print(sol)
+        print(prob.cost(sol))
